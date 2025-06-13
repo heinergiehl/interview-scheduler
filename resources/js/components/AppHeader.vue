@@ -14,24 +14,18 @@ import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
-
 interface Props {
     breadcrumbs?: BreadcrumbItem[];
 }
-
 const props = withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
 });
-
 const page = usePage();
 const auth = computed(() => page.props.auth);
-
 const isCurrentRoute = computed(() => (url: string) => page.url === url);
-
 const activeItemStyles = computed(
     () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100' : ''),
 );
-
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
@@ -39,7 +33,6 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
 ];
-
 const rightNavItems: NavItem[] = [
     {
         title: 'Repository',
@@ -53,7 +46,6 @@ const rightNavItems: NavItem[] = [
     },
 ];
 </script>
-
 <template>
     <div>
         <div class="border-b border-sidebar-border/80">
@@ -101,11 +93,9 @@ const rightNavItems: NavItem[] = [
                         </SheetContent>
                     </Sheet>
                 </div>
-
                 <Link :href="route('dashboard')" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
-
                 <!-- Desktop Menu -->
                 <div class="hidden h-full lg:flex lg:flex-1">
                     <NavigationMenu class="ml-10 flex h-full items-stretch">
@@ -126,13 +116,11 @@ const rightNavItems: NavItem[] = [
                         </NavigationMenuList>
                     </NavigationMenu>
                 </div>
-
                 <div class="ml-auto flex items-center space-x-2">
                     <div class="relative flex items-center space-x-1">
                         <Button variant="ghost" size="icon" class="group h-9 w-9 cursor-pointer">
                             <Search class="size-5 opacity-80 group-hover:opacity-100" />
                         </Button>
-
                         <div class="hidden space-x-1 lg:flex">
                             <template v-for="item in rightNavItems" :key="item.title">
                                 <TooltipProvider :delay-duration="0">
@@ -153,7 +141,6 @@ const rightNavItems: NavItem[] = [
                             </template>
                         </div>
                     </div>
-
                     <DropdownMenu>
                         <DropdownMenuTrigger :as-child="true">
                             <Button
@@ -176,7 +163,6 @@ const rightNavItems: NavItem[] = [
                 </div>
             </div>
         </div>
-
         <div v-if="props.breadcrumbs.length > 1" class="flex w-full border-b border-sidebar-border/70">
             <div class="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl">
                 <Breadcrumbs :breadcrumbs="breadcrumbs" />

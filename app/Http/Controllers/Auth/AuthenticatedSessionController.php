@@ -23,29 +23,27 @@ class AuthenticatedSessionController extends Controller
             'status' => $request->session()->get('status'),
         ]);
     }
-
     /**
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        // use gate to check whether is applicant or employer
+        if (Auth::user()->isApplicant()) {
+            return redirect()->intended(route('applicant.home', absolute: false));
+        }
+        return redirect()->intended(route('employer.home', absolute: false));
     }
-
     /**
      * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
         return redirect('/');
     }
 }

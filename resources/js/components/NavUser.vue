@@ -6,12 +6,10 @@ import { type User } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { ChevronsUpDown } from 'lucide-vue-next';
 import UserMenuContent from './UserMenuContent.vue';
-
 const page = usePage();
 const user = page.props.auth.user as User;
 const { isMobile, state } = useSidebar();
 </script>
-
 <template>
     <SidebarMenu>
         <SidebarMenuItem>

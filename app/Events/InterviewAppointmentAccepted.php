@@ -1,0 +1,28 @@
+<?php
+// app/Events/InterviewAppointmentAccepted.php
+namespace App\Events;
+
+use App\Models\InterviewAppointmentSuggestion;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class InterviewAppointmentAccepted implements ShouldBroadcastNow
+{
+    use Dispatchable, SerializesModels;
+    public function __construct(
+        public readonly InterviewAppointmentSuggestion $suggestion
+    ) {}
+    public function broadcastOn(): PrivateChannel
+    {
+        // employer listens on their own private channel
+        return new PrivateChannel('employer.' . $this->suggestion->employer_id);
+    }
+    public function broadcastWith(): array
+    {
+        return [
+            'suggestion' => $this->suggestion->load(['candidate', 'employer']),
+        ];
+    }
+}
