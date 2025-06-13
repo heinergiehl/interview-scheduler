@@ -1,0 +1,111 @@
+name: CI/CD – Interview Scheduler
+on:
+  push:
+    branches: [ master ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      # (Only needed if you reference it in your build; otherwise you can omit)
+      APP_URL: "https://interview-scheduler.heinerdevelops.tech"
+    steps:
+      # 1) Checkout your code
+      - name: Checkout
+        uses: actions/checkout@v3
+      # 2) Set up PHP 8.1 with needed extensions
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, pdo_pgsql, xml, curl, zip
+          ini-values: post_max_size=256M, upload_max_filesize=256M
+      # 3) Set up Node.js (for Vite / Inertia builds)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      # 4) (Optional) Create a minimal .env for CI—so asset builds & tests can run
+      - name: Create .env.ci
+        run: |
+          cat > .env.ci <<EOF
+          APP_ENV=testing
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_URL=${{ env.APP_URL }}
+          DB_CONNECTION=pgsql
+          DB_HOST=127.0.0.1
+          DB_PORT=5432
+          DB_DATABASE=${{ secrets.DB_DATABASE }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          QUEUE_CONNECTION=database
+          SESSION_DRIVER=cookie
+          VITE_APP_URL=${{ env.APP_URL }}
+          EOF
+      # 5) Install dependencies & build front-end (CI check)
+      - name: Install PHP & JS deps, build assets
+        run: |
+          composer install --no-dev --optimize-autoloader
+          cp .env.ci .env
+          npm ci
+          npm run build
+      # 6) (Optional) Run tests
+      - name: Run PHPUnit
+        run: php artisan test --env=testing --no-interaction
+      # 7) Prepare SSH key for deployment
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+      # 8) SSH into VPS and deploy
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            # A) Regenerate .env on server
+            cat > /var/www/interview-scheduler/.env <<EOF
+            APP_NAME="Interview Scheduler"
+            APP_ENV=production
+            APP_KEY=${{ secrets.APP_KEY }}
+            APP_URL=https://interview-scheduler.heinerdevelops.tech
+            DB_CONNECTION=pgsql
+            DB_HOST=127.0.0.1
+            DB_PORT=5432
+            DB_DATABASE=${{ secrets.DB_DATABASE }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            QUEUE_CONNECTION=database
+            SESSION_DRIVER=cookie
+            # Vite (Inertia)
+            VITE_APP_URL=https://interview-scheduler.heinerdevelops.tech
+            # MailHog
+            MAIL_MAILER=smtp
+            MAIL_HOST=127.0.0.1
+            MAIL_PORT=1025
+            MAIL_FROM_ADDRESS=hello@heinerdevelops.tech
+            MAIL_FROM_NAME="Interview Scheduler"
+            EOF
+            # B) Ensure Postgres container is running
+            cd /var/www/interview-scheduler
+            docker compose up -d db
+            # C) Clean & pull latest code
+            git reset --hard HEAD
+            git clean -fd
+            git pull origin master
+            # D) Install & build on server
+            composer install --no-dev --optimize-autoloader
+            npm ci
+            npm run build
+            # E) Run migrations & cache
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            # F) Reload PHP-FPM & Nginx
+            sudo systemctl reload php8.1-fpm
+            sudo systemctl reload nginx
