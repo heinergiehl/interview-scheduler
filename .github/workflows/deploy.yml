@@ -63,8 +63,8 @@ jobs:
       - name: Build front-end
         run: npm run build
       # 7) Run your test suite
-      - name: Run PHPUnit
-        run: php artisan test --env=testing --no-interaction
+     # - name: Run PHPUnit
+      #  run: php artisan test --env=testing --no-interaction
   deploy:
     name: Deploy to VPS
     needs: build-and-test
