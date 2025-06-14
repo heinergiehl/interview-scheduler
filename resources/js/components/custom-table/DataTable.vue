@@ -22,6 +22,7 @@ const props = defineProps<{
     isApplicant?: boolean; // optional prop for applicant-specific features
     /** Options for the inline-status select. E.g. [{value:'draft',label:'Draft'}] */
     statusOptions: { value: string; label: string }[];
+    rowClass?: (row: Suggestion) => string;
 }>();
 /* ── inline edit ──────────────────────────────────────────────── */
 const editingRowId = ref<number | null>(null);
@@ -176,6 +177,7 @@ watch(
                     :key="row.id"
                     :data-state="row.getIsSelected() && 'selected'"
                     class="h-[60px] data-[state=selected]:bg-primary/5"
+                    :class="props.rowClass?.(row.original) ?? ''"
                 >
                     <!-- checkbox -->
                     <TableCell class="w-4">

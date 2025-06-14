@@ -16,7 +16,7 @@ class InterviewAppointmentSuggestionPolicy
     public function delete(User $user, InterviewAppointmentSuggestion $suggestion): bool
     {
         // the employer can delete the suggestion, but the applicant can't
-        return $suggestion->employer_id === $user->id;
+        return $user->isEmployer();
     }
     public function bulkDelete(User $user): bool
     {

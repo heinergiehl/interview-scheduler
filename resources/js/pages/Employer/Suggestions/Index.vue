@@ -94,11 +94,18 @@ watch(
     },
 );
 /* ── real-time update via Echo ─────────────────────────────────────── */
+const flashedRows = ref<Set<number>>(new Set());
 const userId = props.auth.user.id;
 useEcho(`employer.${userId}`, 'InterviewAppointmentAccepted', (payload: { suggestion: Suggestion }) => {
     const updated: Suggestion = payload.suggestion;
     // replace the old suggestion in our reactive list
     suggestionsList.value = suggestionsList.value.map((s) => (s.id === updated.id ? { ...s, ...updated } : s));
+    // flash it…
+    flashedRows.value.add(updated.id);
+    // …then clear the flash after 1s
+    setTimeout(() => {
+        flashedRows.value.delete(updated.id);
+    }, 1000);
     toast.success('Interview accepted!', {
         description: `Slot #${updated.id} was accepted at ${dayjs(updated.responded_at).format('Pp')}`,
     });
@@ -192,6 +199,7 @@ const statusOptions = [
                 :meta="suggestions.meta"
                 routeName="employer.suggestions.index"
                 :isApplicant="false"
+                :rowClass="(row) => (flashedRows.has(row.id) ? 'bg-primary transition-colors duration-500' : '')"
             />
         </div>
         <p v-else class="text-muted-foreground">No slots yet – hit “Add slot”.</p>

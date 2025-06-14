@@ -2,6 +2,7 @@
 // app/Events/InterviewAppointmentAccepted.php
 namespace App\Events;
 
+use App\Http\Resources\InterviewAppointmentSuggestionResource;
 use App\Models\InterviewAppointmentSuggestion;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -22,7 +23,7 @@ class InterviewAppointmentAccepted implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'suggestion' => $this->suggestion->load(['candidate', 'employer']),
+            'suggestion' => InterviewAppointmentSuggestionResource::make($this->suggestion),
         ];
     }
 }

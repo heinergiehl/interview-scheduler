@@ -44,6 +44,12 @@ class RegisteredUserController extends Controller
         ]);
         event(new Registered($user));
         Auth::login($user);
-        return to_route('dashboard');
+        // return to_route('dashboard');
+        // redirect to the dashboard based on the role
+        if ($user->is_applicant) {
+            return redirect()->route('applicant.home');
+        } else {
+            return redirect()->route('employer.home');
+        }
     }
 }

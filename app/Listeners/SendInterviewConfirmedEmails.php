@@ -13,10 +13,6 @@ class SendInterviewConfirmedEmails implements ShouldQueue
     public function handle(InterviewAppointmentConfirmed $event)
     {
         $s = $event->suggestion;
-        logger()->info('SendInterviewConfirmedEmails!!!', [
-            '$s->candidate->email' => $s->candidate->email,
-            '$s->employer->email' => $s->employer->email,
-        ]);
         Mail::to($s->candidate->email)
             ->queue(new CandidateInterviewConfirmedMail($s));
         // to the employer

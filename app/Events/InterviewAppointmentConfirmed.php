@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Http\Resources\InterviewAppointmentSuggestionResource;
 use App\Models\InterviewAppointmentSuggestion;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -24,7 +25,7 @@ class InterviewAppointmentConfirmed implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'suggestion' => $this->suggestion->load(['candidate', 'employer']),
+            'suggestion' => InterviewAppointmentSuggestionResource::make($this->suggestion),
         ];
     }
 }

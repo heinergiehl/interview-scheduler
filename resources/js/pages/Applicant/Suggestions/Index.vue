@@ -46,19 +46,30 @@ watch(
     },
 );
 /* ── real-time update via Echo ─────────────────────────────────────── */
+const flashedRows = ref<Set<number>>(new Set());
 const userId = props.auth.user.id;
 useEcho(`employer.${userId}`, 'InterviewAppointmentConfirmed', (payload: { suggestion: Suggestion }) => {
     const updated: Suggestion = payload.suggestion;
-    console.log('Received real-time update:', updated);
     // add the new suggestion or update existing one
     const newSuggestion = payload.suggestion;
     const index = suggestionsList.value.findIndex((s) => s.id === updated.id);
     if (index === -1) {
         suggestionsList.value.push(newSuggestion);
+        // flash it…
+        flashedRows.value.add(updated.id);
+        // …then clear the flash after 1s
+        setTimeout(() => {
+            flashedRows.value.delete(updated.id);
+        }, 1000);
     } else {
         suggestionsList.value[index] = newSuggestion;
+        // flash it…
+        flashedRows.value.add(updated.id);
+        // …then clear the flash after 1s
+        setTimeout(() => {
+            flashedRows.value.delete(updated.id);
+        }, 1000);
     }
-    console.log('Updated suggestions list:', suggestionsList.value);
     toast.success('Interview confirmed!', {
         description: `Slot #${updated.id} was accepted at ${dayjs(updated.responded_at).format('Pp')}`,
     });
@@ -81,6 +92,7 @@ useEcho(`employer.${userId}`, 'InterviewAppointmentConfirmed', (payload: { sugge
                 routeName="applicant.suggestions.index"
                 :statusOptions="statusOptions"
                 :isApplicant="true"
+                :rowClass="(row) => (flashedRows.has(row.id) ? 'bg-primary transition-colors duration-500' : '')"
             />
         </div>
         <p v-else class="text-muted-foreground">No slots yet – hit “Add slot”.</p>
