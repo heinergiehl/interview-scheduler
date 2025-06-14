@@ -13,24 +13,26 @@ jobs:
     steps:
       # 1) Checkout code
       - uses: actions/checkout@v3
-      # 2) PHP 8.2 + extensions
+      # 2) Set up PHP 8.2 + extensions
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           extensions: mbstring, pdo_pgsql, xml, curl, zip
           ini-values: post_max_size=256M, upload_max_filesize=256M
-      # 3) Node 20 (for Vite/Inertia)
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      # 3) Cache & install PHP deps (so vendor/ exists)
+      - name: Cache Composer
+        uses: actions/cache@v3
         with:
-          node-version: '20'
-          cache: 'npm'
-      # 4) Create .env for CI
-      - name: Create CI .env
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader
+      # 4) Now .env + key:generate (vendor/autoload.php is present)
+      - name: Create CI .env & generate key
         run: |
           cp .env.example .env
-          php artisan key:generate --force
+          php artisan key:generate --force --ansi
           cat >> .env <<EOF
           APP_ENV=testing
           APP_KEY=${{ secrets.APP_KEY }}
@@ -44,26 +46,24 @@ jobs:
           SESSION_DRIVER=cookie
           VITE_APP_URL=${{ env.APP_URL }}
           EOF
-      # 5) Cache & install PHP deps
-      - name: Cache Composer
-        uses: actions/cache@v3
+      # 5) Set up Node 20 (for Inertia/Vite)
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          path: vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-      - name: Install Composer deps
-        run: composer install --no-dev --prefer-dist --optimize-autoloader
+          node-version: '20'
+          cache: 'npm'
       # 6) Cache & install JS deps, build assets
       - name: Cache NPM
         uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      - name: Install NPM deps
+      - name: Install NPM dependencies
         run: npm ci
       - name: Build front-end
         run: npm run build
-      # 7) Run tests
-      - name: PHPUnit
+      # 7) Run your test suite
+      - name: Run PHPUnit
         run: php artisan test --env=testing --no-interaction
   deploy:
     name: Deploy to VPS
@@ -71,29 +71,29 @@ jobs:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      # 1) Checkout full history (needed for reset)
+      # 1) Checkout full history (needed for git reset)
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       # 2) Load SSH key into agent
-      - name: SSH agent
+      - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      # 3) Deploy script
-      - name: SSH & deploy
+      # 3) SSH & run deploy commands
+      - name: SSH & Deploy
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             set -e
             cd /var/www/interview-scheduler
-            # A) Ensure shared/.env exists (only first run copies example)
+            # A) Ensure shared/.env exists
             mkdir -p shared
             if [ ! -f shared/.env ]; then
               cp .env.example shared/.env
               echo "👉 Edit shared/.env with your production secrets"
             fi
             ln -sf shared/.env .env
-            # B) Ensure database container
+            # B) Bring up database container
             docker compose up -d db
             # C) Pull latest code
             git fetch --all
@@ -102,7 +102,7 @@ jobs:
             composer install --no-dev --optimize-autoloader
             npm ci
             npm run build
-            # E) Migrate & cache
+            # E) Run migrations & cache configs
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
