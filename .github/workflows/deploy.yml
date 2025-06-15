@@ -72,7 +72,7 @@ jobs:
             #docker compose up -d db
             # C) Install & build on the server
             composer install --no-dev --optimize-autoloader
-            npm ci
+            npm i
             npm run build
             # D) Migrate & cache config/routes/views
             php artisan migrate --force
