@@ -36,45 +36,45 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
-      # 1) Checkout full history (needed if you ever use git commands)
+      # 1) Checkout full history
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      # 2) Load your SSH key into the agent
+      # 2) Load SSH key into the agent
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      # 3) Ensure the target dir exists & is owned by your deploy user
+      # 3) Ensure the remote dir exists & is owned by your deploy user
       - name: Prepare remote folder
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "sudo mkdir -p /var/www/interview-scheduler && sudo chown ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} /var/www/interview-scheduler"
+            "sudo mkdir -p /var/www/myapps/interview-scheduler && sudo chown ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} /var/www/myapps/interview-scheduler"
       # 4) Sync all files (excluding .git) up to the server
       - name: Sync code to VPS
         run: |
           rsync -avz --delete --exclude='.git' ./ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/interview-scheduler
-      # 5) SSH in and run your usual deploy steps
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/myapps/interview-scheduler
+      # 5) SSH in and run your deploy commands
       - name: Run remote deploy commands
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             set -e
-            cd /var/www/interview-scheduler
-            # A) Shared .env (only first time copies example → shared/.env)
+            cd /var/www/myapps/interview-scheduler
+            # A) Shared .env (first run only)
             mkdir -p shared
             if [ ! -f shared/.env ]; then
               cp .env.example shared/.env
               echo "👉  Please populate shared/.env with production secrets"
             fi
             ln -sf shared/.env .env
-            # B) Ensure your DB container is up (if you use one)
-            #docker compose up -d db
+            # B) (optional) Bring up your DB container
+            # docker compose up -d db
             # C) Install & build on the server
             composer install --no-dev --optimize-autoloader
             npm i
             npm run build
-            # D) Migrate & cache config/routes/views
+            # D) Migrate & cache
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
