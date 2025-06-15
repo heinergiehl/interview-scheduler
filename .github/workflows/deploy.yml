@@ -1,116 +1,85 @@
+# .github/workflows/ci-cd.yml
 name: CI/CD – Interview Scheduler
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
 jobs:
-  build-and-test:
-    name: Build & Test
+  build:
+    name: Build assets
     runs-on: ubuntu-latest
-    env:
-      APP_URL: https://interview-scheduler.heinerdevelops.tech
     steps:
-      # 1) Checkout code
+      # 1) Checkout
       - uses: actions/checkout@v3
-      # 2) Set up PHP 8.2 + extensions
+      # 2) PHP 8.2 + extensions
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, pdo_pgsql, xml, curl, zip
+          extensions: mbstring, pdo_sqlite, xml, curl, zip
           ini-values: post_max_size=256M, upload_max_filesize=256M
-      # 3) Cache & install PHP deps (so vendor/ exists)
-      - name: Cache Composer
-        uses: actions/cache@v3
-        with:
-          path: vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-      - name: Install Composer dependencies
+      # 3) Composer deps
+      - name: Install PHP dependencies
         run: composer install --no-dev --prefer-dist --optimize-autoloader
-      # 4) Now .env + key:generate (vendor/autoload.php is present)
-      - name: Create CI .env & generate key
-        run: |
-          cp .env.example .env
-          php artisan key:generate --force --ansi
-          cat >> .env <<EOF
-          APP_ENV=testing
-          APP_KEY=${{ secrets.APP_KEY }}
-          APP_URL=${{ env.APP_URL }}
-          DB_CONNECTION=pgsql
-          DB_HOST=127.0.0.1
-          DB_DATABASE=${{ secrets.DB_DATABASE }}
-          DB_USERNAME=${{ secrets.DB_USERNAME }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          QUEUE_CONNECTION=database
-          SESSION_DRIVER=cookie
-          VITE_APP_URL=${{ env.APP_URL }}
-          EOF
-      # 5) Set up Node 20 (for Inertia/Vite)
+      # 4) Node 20 + npm deps + build
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'npm'
-      # 6) Cache & install JS deps, build assets
-      - name: Cache NPM
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      - name: Install NPM dependencies
-        run: npm install
-      - name: Build front-end
-        run: npm run build
-      # 7) Run your test suite
-     # - name: Run PHPUnit
-      #  run: php artisan test --env=testing --no-interaction
+      - name: Install JS dependencies & build
+        run: |
+          npm ci
+          npm run build
   deploy:
     name: Deploy to VPS
-    needs: build-and-test
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: build
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
+      # 1) Checkout full history (needed if you ever use git commands)
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      # 2) Load your SSH key into the agent
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: SSH & Deploy
+      # 3) Ensure the target dir exists & is owned by your deploy user
+      - name: Prepare remote folder
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "sudo mkdir -p /var/www/interview-scheduler && sudo chown ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} /var/www/interview-scheduler"
+      # 4) Sync all files (excluding .git) up to the server
+      - name: Sync code to VPS
+        run: |
+          rsync -avz --delete --exclude='.git' ./ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/interview-scheduler
+      # 5) SSH in and run your usual deploy steps
+      - name: Run remote deploy commands
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             set -e
-            # If this is the first time, clone the repo
-            if [ ! -d /var/www/interview-scheduler ]; then
-              sudo mkdir -p /var/www
-              sudo chown $USER:$USER /var/www
-              git clone git@github.com:${{ github.repository }}.git /var/www/interview-scheduler
-            fi
             cd /var/www/interview-scheduler
-            # Ensure shared/.env exists
+            # A) Shared .env (only first time copies example → shared/.env)
             mkdir -p shared
             if [ ! -f shared/.env ]; then
               cp .env.example shared/.env
-              echo "👉 Edit shared/.env with your production secrets"
+              echo "👉  Please populate shared/.env with production secrets"
             fi
             ln -sf shared/.env .env
-            # Bring up database container
+            # B) Ensure your DB container is up (if you use one)
             docker compose up -d db
-            # Fetch & reset to latest
-            git fetch origin master
-            git reset --hard origin/master
-            # Install & build
+            # C) Install & build on the server
             composer install --no-dev --optimize-autoloader
             npm ci
             npm run build
-            # Migrate & cache
+            # D) Migrate & cache config/routes/views
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-            # Reload services
+            # E) Reload PHP-FPM & Nginx
             sudo systemctl reload php8.2-fpm
             sudo systemctl reload nginx
           EOF
