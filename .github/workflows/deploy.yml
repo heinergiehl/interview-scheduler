@@ -69,7 +69,7 @@ jobs:
             fi
             ln -sf shared/.env .env
             # B) Ensure your DB container is up (if you use one)
-            docker compose up -d db
+            #docker compose up -d db
             # C) Install & build on the server
             composer install --no-dev --optimize-autoloader
             npm ci
