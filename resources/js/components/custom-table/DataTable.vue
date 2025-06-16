@@ -10,7 +10,7 @@ import { router, useForm } from '@inertiajs/vue3';
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/vue-table';
 import { FlexRender, getCoreRowModel, getSortedRowModel, useVueTable } from '@tanstack/vue-table';
 import { format } from 'date-fns';
-import { Edit, Trash, Trash2 } from 'lucide-vue-next';
+import { Check, CircleOff, Edit, Trash, Trash2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import { route } from 'ziggy-js';
 /* ── props ─────────────────────────────────────────────────────── */
@@ -155,7 +155,7 @@ watch(
             </Select>
         </div>
         <!-- table -->
-        <Table class="table-fixed select-none">
+        <Table class="select-none">
             <TableHeader>
                 <TableRow v-for="hg in table.getHeaderGroups()" :key="hg.id">
                     <TableHead class="w-4">
@@ -210,9 +210,11 @@ watch(
                     <TableCell>
                         {{ row.original.responded_at ? format(new Date(row.original.responded_at), 'Pp') : '-' }}
                     </TableCell>
-                    <!-- single-row actions hidden only when *multiple* rows selected -->
+                    <!-- 
+                    show edit/delete buttons if not in edit mode and not applicant
+                    -->
                     <TableCell v-if="!multiSelected" class="whitespace-nowrap">
-                        <template v-if="editingRowId !== row.original.id">
+                        <template v-if="editingRowId !== row.original.id && !props.isApplicant">
                             <div class="flex items-center space-x-2">
                                 <Button v-if="row.original.canUpdate" size="icon" variant="outline" @click="startEdit(row.original)">
                                     <Edit />
@@ -232,7 +234,28 @@ watch(
                                 </Button>
                             </div>
                         </template>
-                        <template v-else>
+                        <!-- show accept and decline button for the case that not being in edit mode and user is participant -->
+                        <template v-else-if="editingRowId !== row.original.id && props.isApplicant">
+                            <div class="flex items-center space-x-2">
+                                <Button
+                                    v-if="row.original.canAccept"
+                                    size="icon"
+                                    @click="() => router.put(route('applicant.suggestions.accept', row.original.id), { preserveState: true })"
+                                >
+                                    <Check />
+                                </Button>
+                                <Button
+                                    v-if="row.original.canDecline"
+                                    size="icon"
+                                    variant="destructive"
+                                    @click="() => router.put(route('applicant.suggestions.decline', row.original.id), { preserveState: true })"
+                                >
+                                    <CircleOff />
+                                </Button>
+                            </div>
+                        </template>
+                        <!-- show save/cancel buttons if in edit mode -->
+                        <template v-else-if="editingRowId === row.original.id">
                             <Button size="sm" :disabled="form.processing" @click="submitEdit(row.original.id)">Save</Button>
                             <Button size="sm" variant="ghost" @click="cancelEdit">Cancel</Button>
                         </template>

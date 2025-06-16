@@ -9,9 +9,7 @@ class InterviewAppointmentSuggestionPolicy
 {
     public function update(User $user, InterviewAppointmentSuggestion $suggestion): bool
     {
-        // return $suggestion->employer_id === $user->id;
-        // the employer can update the suggestion as he wants, but the applicant can only update the status from confirmed to accepted
-        return $user->isEmployer() || ($user->isApplicant() && $suggestion->appointment_status === 'confirmed');
+        return $user->isEmployer() && $suggestion->appointment_status === 'draft' || ($user->isApplicant() && $suggestion->appointment_status === 'confirmed');
     }
     public function delete(User $user, InterviewAppointmentSuggestion $suggestion): bool
     {
@@ -21,5 +19,15 @@ class InterviewAppointmentSuggestionPolicy
     public function bulkDelete(User $user): bool
     {
         return $user->isEmployer();   // adapt to your own role‐check helper
+    }
+    public function accept(User $user, InterviewAppointmentSuggestion $suggestion): bool
+    {
+        // the applicant can accept the suggestion
+        return $user->isApplicant() && $suggestion->appointment_status === 'confirmed';
+    }
+    public function decline(User $user, InterviewAppointmentSuggestion $suggestion): bool
+    {
+        // the applicant can decline the suggestion
+        return $user->isApplicant() && $suggestion->appointment_status === 'confirmed';
     }
 }

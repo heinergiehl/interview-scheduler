@@ -12,6 +12,10 @@ export type Suggestion = {
     responded_at: string | null;
     appointment_status: 'pending' | 'accepted' | 'declined';
     user: User;
+    employer: User;
+    candidate: User;
     canUpdate: boolean;
     canDelete: boolean;
+    canDecline: boolean;
+    canAccept: boolean;
 };

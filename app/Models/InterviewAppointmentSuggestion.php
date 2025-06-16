@@ -3,12 +3,10 @@
 namespace App\Models;
 
 use App\Events\InterviewAppointmentAccepted;
+use App\Events\InterviewAppointmentDeclined;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Mail\EmployerInterviewAcceptedMail;
-use App\Mail\CandidateInterviewAcceptedMail;
 use App\Models\User;
-use Illuminate\Support\Facades\Mail;
 
 class InterviewAppointmentSuggestion extends Model
 {
@@ -39,6 +37,17 @@ class InterviewAppointmentSuggestion extends Model
                 'responded_at' => now(),
             ]);
             InterviewAppointmentAccepted::dispatch($this);
+        });
+        return $this->fresh();
+    }
+    public function decline(): self
+    {
+        DB::transaction(function () {
+            $this->update([
+                'appointment_status' => 'declined',
+                'responded_at' => now(),
+            ]);
+            InterviewAppointmentDeclined::dispatch($this);
         });
         return $this->fresh();
     }

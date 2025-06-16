@@ -1,5 +1,5 @@
 <?php
-// app/Listeners/SendInterviewConfirmedEmails.php
+
 namespace App\Listeners;
 
 use App\Events\InterviewAppointmentConfirmed;

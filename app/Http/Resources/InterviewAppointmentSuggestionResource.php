@@ -33,6 +33,8 @@ class InterviewAppointmentSuggestionResource extends JsonResource
             // policy-based flags:
             'canUpdate'    => Gate::allows('update', $this->resource),
             'canDelete'    => Gate::allows('delete', $this->resource),
+            'canAccept'    => Gate::allows('accept', $this->resource),
+            'canDecline'    => Gate::allows('decline', $this->resource),
         ];
     }
 }

@@ -37,7 +37,6 @@ const props = defineProps<{
     };
     candidates: { id: number; name: string }[];
 }>();
-const auth = props.auth;
 /* ── form state ─────────────────────────────────────────────────────── */
 const form = useForm({
     suggested_at: '',
@@ -93,6 +92,13 @@ watch(
         suggestionsList.value = [...v];
     },
 );
+const ACCEPTED_CLASS = 'bg-green-500 transition-colors duration-500';
+const DECLINED_CLASS = 'bg-red-500   transition-colors duration-500';
+/** Return the flash colour (or empty string) for a given row */
+function flashRowClass(row: Suggestion): string {
+    if (!flashedRows.value.has(row.id)) return '';
+    return declined.value ? DECLINED_CLASS : ACCEPTED_CLASS;
+}
 /* ── real-time update via Echo ─────────────────────────────────────── */
 const flashedRows = ref<Set<number>>(new Set());
 const userId = props.auth.user.id;
@@ -108,6 +114,24 @@ useEcho(`employer.${userId}`, 'InterviewAppointmentAccepted', (payload: { sugges
     }, 1000);
     toast.success('Interview accepted!', {
         description: `Slot #${updated.id} was accepted at ${dayjs(updated.responded_at).format('Pp')}`,
+    });
+});
+const declined = ref(false);
+useEcho(`employer.${userId}`, 'InterviewAppointmentDeclined', (payload: { suggestion: Suggestion }) => {
+    const updated: Suggestion = payload.suggestion;
+    console.log('InterviewAppointmentDeclined', updated);
+    // replace the old suggestion in our reactive list
+    suggestionsList.value = suggestionsList.value.map((s) => (s.id === updated.id ? { ...s, ...updated } : s));
+    // flash it…
+    flashedRows.value.add(updated.id);
+    // …then clear the flash after 1s
+    declined.value = true;
+    setTimeout(() => {
+        flashedRows.value.delete(updated.id);
+        declined.value = false;
+    }, 1000);
+    toast.error('Interview declined!', {
+        description: `Slot #${updated.id} was accepted at ${dayjs(updated.responded_at)}`,
     });
 });
 const statusOptions = [
@@ -197,9 +221,9 @@ const statusOptions = [
                 :columns="columns"
                 :data="suggestionsList"
                 :meta="suggestions.meta"
-                routeName="employer.suggestions.index"
+                routeName="employer.home"
                 :isApplicant="false"
-                :rowClass="(row) => (flashedRows.has(row.id) ? 'bg-primary transition-colors duration-500' : '')"
+                :rowClass="flashRowClass"
             />
         </div>
         <p v-else class="text-muted-foreground">No slots yet – hit “Add slot”.</p>

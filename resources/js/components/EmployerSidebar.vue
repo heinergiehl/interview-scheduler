@@ -20,7 +20,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'My slots',
-        href: route('employer.suggestions.index'),
+        href: route('employer.home'),
         icon: CalendarPlus,
     },
 ];

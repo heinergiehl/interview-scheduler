@@ -55,11 +55,8 @@ class ApplicantSuggestionController extends Controller
      *------------------------------------------------------------------*/
     public function decline(InterviewAppointmentSuggestion $suggestion)
     {
-        if ($suggestion->status === 'confirmed') {
-            $suggestion->update([
-                'status'       => 'declined',
-                'responded_at' => now(),
-            ]);
+        if ($suggestion->appointment_status === 'confirmed') {
+            $suggestion->decline(); // model handles tx + notifications
         }
         return back()->with('success', 'Slot declined.');
     }

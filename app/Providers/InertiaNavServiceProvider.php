@@ -21,7 +21,6 @@ class InertiaNavServiceProvider extends ServiceProvider
                     'logoRoute' => route('applicant.home'),
                     'main'  => [
                         ['href' => route('applicant.home'),         'title' => 'Dashboard',   'icon' => 'LayoutGrid'],
-                        ['href' => route('applicant.suggestions.index'), 'title' => 'Suggestions', 'icon' => 'Folder'],
                     ],
                     'footer' => [
                         ['href' => 'https://docs.myapp.com', 'title' => 'Docs', 'icon' => 'BookOpen'],
@@ -32,7 +31,6 @@ class InertiaNavServiceProvider extends ServiceProvider
                     'logoRoute' => route('employer.home'),
                     'main'  => [
                         ['href' => route('employer.home'),            'title' => 'Dashboard',   'icon' => 'LayoutGrid'],
-                        ['href' => route('employer.suggestions.index'), 'title' => 'Suggestions', 'icon' => 'LayoutGrid'],
                     ],
                     'footer' => [
                         ['href' => 'https://github.com/laravel/vue-starter-kit', 'title' => 'Github Repo', 'icon' => 'Folder'],

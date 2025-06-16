@@ -104,7 +104,7 @@ class EmployerSuggestionController extends Controller
         // Inertia will see this redirect and re-render your Index page with
         // the updated suggestions payload (minus the deleted one)
         return redirect()
-            ->route('employer.suggestions.index')
+            ->route('employer.home')
             ->with('success', 'Slot removed.');
     }
     /**

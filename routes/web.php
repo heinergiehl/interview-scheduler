@@ -1,13 +1,10 @@
 <?php
 
-use App\Http\Controllers\Employer\EmployerDashboardController;
-use App\Http\Controllers\Applicant\ApplicantDashboardController;
 use App\Http\Controllers\Employer\EmployerSuggestionController;
 use App\Http\Controllers\Applicant\ApplicantSuggestionController;
-use App\Mail\EmployerInterviewConfirmedMail;
+use App\Mail\CandidateInterviewAcceptedMail;
 use App\Models\InterviewAppointmentSuggestion;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Broadcast;
 use Inertia\Inertia;
 
 Route::middleware(['auth'])->group(function () {
@@ -16,8 +13,7 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('employer')
         ->name('employer.')
         ->group(function () {
-            Route::get('/', EmployerDashboardController::class)->name('home');
-            Route::get('suggestions',  [EmployerSuggestionController::class, 'index'])->name('suggestions.index');
+            Route::get('suggestions',  [EmployerSuggestionController::class, 'index'])->name('home');
             Route::post('suggestions', [EmployerSuggestionController::class, 'store'])->name('suggestions.store');
             Route::put(
                 'suggestions/{suggestion}',
@@ -38,8 +34,7 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('applicant')
         ->name('applicant.')
         ->group(function () {
-            Route::get('/', ApplicantDashboardController::class)->name('home');
-            Route::get('suggestions', [ApplicantSuggestionController::class, 'index'])->name('suggestions.index');
+            Route::get('suggestions', [ApplicantSuggestionController::class, 'index'])->name('home');
             Route::put(
                 'suggestions/{suggestion}/accept',
                 [ApplicantSuggestionController::class, 'accept']
@@ -51,11 +46,11 @@ Route::middleware(['auth'])->group(function () {
         });
 });
 Route::get('/email-test', function (Request $request) {
-    return new EmployerInterviewConfirmedMail(
+    return new CandidateInterviewAcceptedMail(
         InterviewAppointmentSuggestion::create(
             [
-                'employer_id' => $request->user()->id,
-                'candidate_id' => 1, // assuming a candidate exists
+                'employer_id' => 10,
+                'candidate_id' => 9, // assuming a candidate exists
                 'suggested_date_time' => now()->addDays(2),
                 'appointment_status' => 'confirmed',
             ]
