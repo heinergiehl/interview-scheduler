@@ -81,7 +81,7 @@ jobs:
             # PHP dependencies (already cached on build runner, but run anyway in case of server-specific optimisations)
             composer install --no-dev --optimize-autoloader --no-interaction
             # JS deps & build (npm i instead of ci)
-            npm i --omit=dev
+            npm i 
             npm run build
             # Laravel housekeeping
             php artisan migrate --force
