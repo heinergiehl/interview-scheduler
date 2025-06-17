@@ -57,7 +57,7 @@ Route::get('/email-test', function (Request $request) {
         )
     );
 })->name('email.test');
-Route::get('/', fn() => Inertia::render('Home'));
+Route::get('/', fn() => Inertia::render('Home'))->name('landing-page');
 // require auth routes
 require __DIR__ . '/auth.php';
 // require settings routes

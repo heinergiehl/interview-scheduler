@@ -14,16 +14,16 @@ class VerifyEmailController extends Controller
      */
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {
+        // redirect route based on wether is_applicant or not
+        $redirectRoute = $request->user()->is_applicant ? 'applicant.home' : 'employer.home';
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+            return redirect()->intended(route($redirectRoute, absolute: false) . '?verified=1');
         }
-
         if ($request->user()->markEmailAsVerified()) {
             /** @var \Illuminate\Contracts\Auth\MustVerifyEmail $user */
             $user = $request->user();
             event(new Verified($user));
         }
-
-        return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+        return redirect()->intended(route($redirectRoute, absolute: false) . '?verified=1');
     }
 }

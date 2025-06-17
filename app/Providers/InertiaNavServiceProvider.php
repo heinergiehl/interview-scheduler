@@ -18,23 +18,24 @@ class InertiaNavServiceProvider extends ServiceProvider
             return match (true) {
                 $user->can('applicant') => [
                     'userType' => 'Applicant',
-                    'logoRoute' => route('applicant.home'),
+                    'logoRoute' => route('landing-page'),
                     'main'  => [
                         ['href' => route('applicant.home'),         'title' => 'Dashboard',   'icon' => 'LayoutGrid'],
                     ],
                     'footer' => [
-                        ['href' => 'https://docs.myapp.com', 'title' => 'Docs', 'icon' => 'BookOpen'],
+                        ['href' => 'https://github.com/heinergiehl/', 'title' => "Heiner's GitHub", 'icon' => 'Github'],
+                        ['href' => 'https://heinerdevelops.tech/',                    'title' => "Heiner's Website", 'icon' => 'BookImage'],
                     ],
                 ],
                 $user->can('employer') => [
                     'userType' => 'Employer',
-                    'logoRoute' => route('employer.home'),
+                    'logoRoute' => route('landing-page'),
                     'main'  => [
                         ['href' => route('employer.home'),            'title' => 'Dashboard',   'icon' => 'LayoutGrid'],
                     ],
                     'footer' => [
-                        ['href' => 'https://github.com/laravel/vue-starter-kit', 'title' => 'Github Repo', 'icon' => 'Folder'],
-                        ['href' => 'https://laravel.com/docs',                    'title' => 'Documentation', 'icon' => 'BookOpen'],
+                        ['href' => 'https://github.com/heinergiehl/', 'title' => "Heiner's GitHub", 'icon' => 'Github'],
+                        ['href' => 'https://heinerdevelops.tech/',                    'title' => "Heiner's Website", 'icon' => 'BookImage'],
                     ],
                 ],
                 default => [],

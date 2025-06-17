@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Events\InterviewAppointmentAccepted;
+use App\Events\InterviewAppointmentConfirmed;
 use App\Events\InterviewAppointmentDeclined;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 class InterviewAppointmentSuggestion extends Model
 {
@@ -16,6 +18,11 @@ class InterviewAppointmentSuggestion extends Model
         'suggested_datime_time' => 'datetime',
         'responded_at' => 'datetime',
     ];
+    public function user()
+    {
+        $isApplicant = auth()->user()->isApplicant();
+        return $isApplicant ? $this->candidate() : $this->employer();
+    }
     public function employer()
     {
         return $this->belongsTo(User::class, 'employer_id');
@@ -24,11 +31,17 @@ class InterviewAppointmentSuggestion extends Model
     {
         return $this->belongsTo(User::class, 'candidate_id');
     }
-    public function user()
+    public function confirm(Carbon $newDate): void
     {
-        return $this->belongsTo(User::class, 'employer_id');
+        DB::transaction(function () use ($newDate) {
+            $this->update([
+                'suggested_date_time' => $newDate,
+                'appointment_status'  => 'confirmed',
+            ]);
+            $this->load(['candidate', 'employer']);
+            InterviewAppointmentConfirmed::dispatch($this);
+        });
     }
-    /* called by applicant (the candidate, me :)) */
     public function accept(): self
     {
         DB::transaction(function () {

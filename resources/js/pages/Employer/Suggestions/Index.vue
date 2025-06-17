@@ -44,7 +44,7 @@ const form = useForm({
 });
 const today = dayjs();
 const date = ref<Date | null>(null);
-const time = ref('09:00');
+const time = ref('04:20');
 const open = ref(false);
 /* ── submit handler ─────────────────────────────────────────────────── */
 function save() {
@@ -55,7 +55,7 @@ function save() {
         onSuccess: () => {
             form.reset();
             date.value = null; // reset date picker
-            time.value = '09:00';
+            time.value = '04:20';
             open.value = false; // close modal
             toast.success('Success!', {
                 description: 'Your slot suggestion has been saved.',
@@ -113,7 +113,7 @@ useEcho(`employer.${userId}`, 'InterviewAppointmentAccepted', (payload: { sugges
         flashedRows.value.delete(updated.id);
     }, 1000);
     toast.success('Interview accepted!', {
-        description: `Slot #${updated.id} was accepted at ${dayjs(updated.responded_at).format('Pp')}`,
+        description: `Slot #${updated.id} was accepted at ${dayjs(updated.responded_at)}`,
     });
 });
 const declined = ref(false);

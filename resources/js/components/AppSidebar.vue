@@ -9,6 +9,7 @@ import AppLogo from './AppLogo.vue';
 const page = usePage();
 const mainNavItems = computed(() => page.props.nav?.main ?? []);
 const footerNavItems = computed(() => page.props.nav?.footer ?? []);
+const logoRoute = computed(() => page.props.nav?.logoRoute);
 </script>
 <template>
     <Sidebar collapsible="icon" variant="inset">
@@ -16,7 +17,7 @@ const footerNavItems = computed(() => page.props.nav?.footer ?? []);
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('employer.home')">
+                        <Link :href="logoRoute!">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

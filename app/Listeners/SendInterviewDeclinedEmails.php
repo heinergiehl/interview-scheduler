@@ -3,8 +3,9 @@
 namespace App\Listeners;
 
 use App\Events\InterviewAppointmentConfirmed;
-use App\Mail\EmployerInterviewDeclineddMail;
+use App\Mail\EmployerInterviewDeclinedMail;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Mail;
 
 class SendInterviewDeclinedEmails implements ShouldQueue
 {
@@ -23,6 +24,6 @@ class SendInterviewDeclinedEmails implements ShouldQueue
         $s = $event->suggestion;
         // just out of lazyness, left it for the candidate :)
         Mail::to($s->employer->email)
-            ->queue(new EmployerInterviewDeclineddMail($s));
+            ->queue(new EmployerInterviewDeclinedMail($s));
     }
 }

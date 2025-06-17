@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseSidebar from '@/components/EmployerSidebar.vue'; // your file
+import BaseSidebar from '@/components/AppSidebar.vue'; // your file
 </script>
 <template>
     <div class="flex">

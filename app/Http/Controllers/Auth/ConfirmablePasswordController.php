@@ -19,7 +19,6 @@ class ConfirmablePasswordController extends Controller
     {
         return Inertia::render('auth/ConfirmPassword');
     }
-
     /**
      * Confirm the user's password.
      */
@@ -33,9 +32,10 @@ class ConfirmablePasswordController extends Controller
                 'password' => __('auth.password'),
             ]);
         }
-
         $request->session()->put('auth.password_confirmed_at', time());
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        // check if the user is an applicant or employer and redirect accordingly
+        if ($request->user()->is_applicant)
+            return redirect()->intended(route('applicant.home', absolute: false));
+        return redirect()->intended(route('employer.home', absolute: false));
     }
 }

@@ -15,7 +15,7 @@
                 routeName="applicant.home"
                 :statusOptions="statusOptions"
                 :isApplicant="true"
-                :rowClass="(row) => (flashedRows.has(row.id) ? 'bg-primary transition-colors duration-500' : '')"
+                :rowClass="flashRowClass"
             />
         </div>
         <p v-else class="text-muted-foreground">No slots yet – hit “Add slot”.</p>
@@ -50,18 +50,27 @@ const statusOptions = [
     { value: 'confirmed', label: 'Confirmed' },
     { value: 'accepted', label: 'Accepted' },
 ];
+const CONFIRMED_CLASS = 'bg-primary transition-colors duration-500';
+function flashRowClass(row: Suggestion) {
+    return flashedRows.value.has(row.id) ? CONFIRMED_CLASS : '';
+}
 // Track which rows should flash
 const flashedRows = ref<Set<number>>(new Set());
 // Listen for the real‐time event,
 // flash the new row, toast, then reload suggestions only,
 // preserving this component’s state (including `flashedRows`).
+const confirmed = ref(false);
 useEcho(`employer.${props.auth.user.id}`, 'InterviewAppointmentConfirmed', ({ suggestion }: { suggestion: Suggestion }) => {
     // 1) Flash it
     flashedRows.value.add(suggestion.id);
-    setTimeout(() => flashedRows.value.delete(suggestion.id), 2000);
+    confirmed.value = true;
+    setTimeout(() => {
+        flashedRows.value.delete(suggestion.id);
+        confirmed.value = false;
+    }, 2000);
     // 2) Immediate feedback
     toast.success('Interview confirmed!', {
-        description: `Slot #${suggestion.id} was accepted at ${dayjs(suggestion.responded_at)}`,
+        description: `Slot #${suggestion.id} was accepted at ${dayjs(suggestion.suggested_date_time)}`,
     });
     // 3) Partially reload *only* the `suggestions` prop,
     //    and keep our local state alive so the flash sticks.

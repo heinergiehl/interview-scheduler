@@ -8,14 +8,15 @@ use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
 use App\Http\Requests\BulkDestroyAppointmentSuggestionRequest;
 use App\Http\Requests\StoreInterviewSuggestionRequest;
+use App\Http\Requests\UpdateInterviewSuggestionRequest;
 use App\Http\Resources\InterviewAppointmentSuggestionResource;
 use App\Models\InterviewAppointmentSuggestion;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 //Inertia
 use Inertia\Inertia;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Carbon;
 
 class EmployerSuggestionController extends Controller
 {
@@ -67,32 +68,13 @@ class EmployerSuggestionController extends Controller
         }
         return back()->with('success', 'Slot proposed!');
     }
-    public function update(Request $r, InterviewAppointmentSuggestion $suggestion)
+    public function update(UpdateInterviewSuggestionRequest $r, InterviewAppointmentSuggestion $suggestion)
     {
         $this->authorize('update', $suggestion);
-        abort_if($suggestion->employer_id !== $r->user()->id, 403);
-        $r->validate([
-            'suggested_at'        => [
-                'required',
-                'date',
-                'after:now',
-                Rule::unique('interview_appointment_suggestions', 'suggested_date_time')
-                    ->ignore($suggestion->id)
-                    ->where(fn($q) => $q->where('employer_id', $r->user()->id)),
-            ],
-            'appointment_status'  => 'required|in:draft,confirmed',
-        ]);
-        // update and capture whether it just became “confirmed”
-        $wasConfirmed = $r->input('appointment_status') === 'confirmed'
+        $wasConfirmed = $r->appointment_status === 'confirmed'
             && $suggestion->appointment_status !== 'confirmed';
-        $suggestion->update([
-            'suggested_date_time' => $r->input('suggested_at'),
-            'appointment_status'  => $r->input('appointment_status'),
-        ]);
-        // Dispatch the event only when the status actually changed to confirmed
         if ($wasConfirmed) {
-            $suggestion->load(['candidate', 'employer']); // eager load user for the event
-            InterviewAppointmentConfirmed::dispatch($suggestion);
+            $suggestion->confirm(Carbon::parse($r->suggested_at));
         }
         return back()->with('success', 'Slot updated.');
     }

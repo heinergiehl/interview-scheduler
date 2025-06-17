@@ -140,7 +140,7 @@ watch(
     <div>
         <!-- toolbar -->
         <div class="flex items-center justify-between px-4 py-2">
-            <Button v-if="anySelected" size="sm" variant="destructive" class="flex items-center gap-1" @click="bulkDelete">
+            <Button v-if="anySelected && !isApplicant" size="sm" variant="destructive" class="flex items-center gap-1" @click="bulkDelete">
                 <Trash2 class="h-4 w-4" /> Delete&nbsp;{{ selectedIds.length }}
             </Button>
         </div>
@@ -158,7 +158,7 @@ watch(
         <Table class="select-none">
             <TableHeader>
                 <TableRow v-for="hg in table.getHeaderGroups()" :key="hg.id">
-                    <TableHead class="w-4">
+                    <TableHead class="w-4" v-if="!props.isApplicant">
                         <Checkbox
                             :model-value="table.getIsAllPageRowsSelected()"
                             :indeterminate="table.getIsSomePageRowsSelected()"
@@ -180,7 +180,7 @@ watch(
                     :class="props.rowClass?.(row.original) ?? ''"
                 >
                     <!-- checkbox -->
-                    <TableCell class="w-4">
+                    <TableCell class="w-4" v-if="!props.isApplicant">
                         <Checkbox
                             :model-value="row.getIsSelected()"
                             :indeterminate="row.getIsSomeSelected()"
