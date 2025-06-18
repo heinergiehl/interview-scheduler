@@ -1,7 +1,5 @@
 <?php
-
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Server Side Rendering
@@ -14,13 +12,11 @@ return [
     | See: https://inertiajs.com/server-side-rendering
     |
     */
-
     'ssr' => [
-        'enabled' => true,
+        'enabled' => false,
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
     ],
-
     /*
     |--------------------------------------------------------------------------
     | Testing
@@ -31,14 +27,11 @@ return [
     | attempts to locate the component as a file relative to the paths.
     |
     */
-
     'testing' => [
         'ensure_pages_exist' => true,
-
         'page_paths' => [
             resource_path('js/pages'),
         ],
-
         'page_extensions' => [
             'js',
             'jsx',
@@ -48,5 +41,4 @@ return [
             'vue',
         ],
     ],
-
 ];
