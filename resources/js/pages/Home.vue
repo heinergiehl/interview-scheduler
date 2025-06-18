@@ -45,7 +45,7 @@ const closeStartMenu = () => (showStartMenu.value = false);
             <span class="mt-1 p-0.5 text-white select-none group-hover:bg-blue-800/50 dark:group-hover:bg-blue-600/50"> Dashboard </span>
         </div>
         <!-- Main Window ──────────────────────────────────── -->
-        <div class="window-style mx-auto mt-24 flex max-w-4xl flex-col bg-[#C0C0C0] dark:bg-[#2b2b2b]" style="height: 600px">
+        <div class="window-style mx-auto mt-5 flex max-w-4xl flex-col bg-[#C0C0C0] dark:bg-[#2b2b2b]" style="height: 600px">
             <!-- Title Bar -->
             <div class="flex flex-shrink-0 items-center justify-between bg-[#000080] p-1 text-white select-none dark:bg-[#000040]">
                 <h1 class="text-lg font-bold tracking-wider">InterviewScheduler - Project Overview</h1>

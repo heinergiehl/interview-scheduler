@@ -85,7 +85,7 @@ jobs:
             npm run build
             # Laravel housekeeping
             #php artisan migrate --force
-            php artisan key:generate --force
+            #php artisan key:generate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
@@ -93,4 +93,5 @@ jobs:
             # Reload PHP-FPM & Nginx
             sudo systemctl reload php8.2-fpm
             sudo systemctl reload nginx
+            sudo supervisorctl restart all
           EOF

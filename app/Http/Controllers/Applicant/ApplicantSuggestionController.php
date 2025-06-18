@@ -24,7 +24,7 @@ class ApplicantSuggestionController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
         $perPage = $request->integer('per_page', 5);
-        $paginator = InterviewAppointmentSuggestion::with(['user', 'candidate', 'employer'])
+        $paginator = InterviewAppointmentSuggestion::with(['candidate', 'employer'])
             ->where('appointment_status', 'confirmed')
             ->orWhere('appointment_status', 'accepted')
             ->orderBy('created_at', 'desc')
@@ -47,6 +47,11 @@ class ApplicantSuggestionController extends Controller
     {
         abort_if($suggestion->status === 'accepted', 404);      // already handled?
         $suggestion->accept();                                 // model handles tx + notifications
+        logger('Interview slot accepted by applicant', [
+            'suggestion_id' => $suggestion->id,
+            'applicant_id'  => $suggestion->candidate_id,
+            'employer_id'   => $suggestion->employer_id,
+        ]);
         return back()->with('success', 'Interview scheduled.');
     }
     /* ------------------------------------------------------------------

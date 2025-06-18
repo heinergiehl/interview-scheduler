@@ -18,11 +18,6 @@ class InterviewAppointmentSuggestion extends Model
         'suggested_datime_time' => 'datetime',
         'responded_at' => 'datetime',
     ];
-    public function user()
-    {
-        $isApplicant = auth()->user()->isApplicant();
-        return $isApplicant ? $this->candidate() : $this->employer();
-    }
     public function employer()
     {
         return $this->belongsTo(User::class, 'employer_id');

@@ -31,7 +31,7 @@ class EmployerSuggestionController extends Controller
             ->where('id', '!=', $me) // exclude myself
             ->orderBy('name')
             ->get(['id', 'name']);
-        $paginator = InterviewAppointmentSuggestion::with(['user', 'candidate', 'employer'])
+        $paginator = InterviewAppointmentSuggestion::with(['candidate', 'employer'])
             ->orderByRaw('employer_id = ? desc', [$me]) // put my suggestions first
             ->orderBy('created_at', 'desc')
             ->paginate($perPage)

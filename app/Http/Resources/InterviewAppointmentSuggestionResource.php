@@ -12,11 +12,12 @@ class InterviewAppointmentSuggestionResource extends JsonResource
      */
     public function toArray($request): array
     {
+        $user = $request->user();
         return [
             'id'           => $this->id,
             'user'         => [
-                'id'   => $this->user->id,
-                'name' => $this->user->name,
+                'id'   => $user->id,
+                'name' => $user->name,
             ],
             // you can format dates here, or even cast in the model
             'suggested_date_time'    => $this->suggested_date_time,
